@@ -46,7 +46,7 @@ public class Experiment extends AppCompatActivity {
         View decorView = getWindow().getDecorView();
 
         // Hide status and navigation bars
-        int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE;
         decorView.setSystemUiVisibility(uiOptions);
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
