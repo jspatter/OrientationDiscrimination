@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -26,11 +27,13 @@ public class Experiment extends AppCompatActivity {
     private boolean clickRight;
     private boolean done;
     private ArrayList<Staircase> staircases;
+    private ArrayList<Staircase> finishedStaircases;
     private int screenHeight;
     private int screenWidth;
     private Handler myHandler;
     private ImageView gratingImageView;
     private Context mContext;
+    private Object lock = new Object();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +72,20 @@ public class Experiment extends AppCompatActivity {
         gratingImageView.setVisibility(View.GONE);
     }
 
+    private void initStaircases() {
+        Staircase staircaseCardCW = new Staircase(AppConstants.CARDINAL_ANGLE, true);
+        staircases.add(staircaseCardCW);
+
+        Staircase staircaseCardCCW = new Staircase(AppConstants.CARDINAL_ANGLE, false);
+        staircases.add(staircaseCardCCW);
+
+        Staircase staircaseOblCW = new Staircase(AppConstants.OBLIQUE_ANGLE, true);
+        staircases.add(staircaseOblCW);
+
+        Staircase staircaseOblCCW = new Staircase(AppConstants.OBLIQUE_ANGLE, false);
+        staircases.add(staircaseOblCCW);
+    }
+
     // Shows what has been clicked on the screen
     private void clickRight() {
         if (!clickRight && !clickLeft) {
@@ -84,13 +101,13 @@ public class Experiment extends AppCompatActivity {
         }
     }
 
-    private void updateStaircase(boolean isCorrect) {
-        if (isCorrect) {
-
-        } else {
-
-        }
-    }
+//    private void updateStaircase(boolean isCorrect, Staircase currentStaircase) {
+//        if (isCorrect) {
+//
+//        } else {
+//
+//        }
+//    }
 
     private void update() {
         new Thread(new Runnable() {
@@ -99,11 +116,16 @@ public class Experiment extends AppCompatActivity {
                 while (!done) {
                     int timeElapsed = 0;
                     try {
+                        int randStairIdx = (int) (Math.random() * (staircases.size()-1));
+                        final Staircase currentStaircase = staircases.get(randStairIdx);
+                        // Need to make it switch which angle presented first
+
                         timeElapsed = timeElapsed + AppConstants.ISI_TIME;
                         Thread.sleep(AppConstants.EXP_THREAD);
                         myHandler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
+                                gratingImageView.setRotation(currentStaircase.getBaseAngle());
                                 gratingImageView.setVisibility(View.VISIBLE);
                             }
                         }, timeElapsed);
@@ -122,7 +144,7 @@ public class Experiment extends AppCompatActivity {
                         myHandler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                gratingImageView.setRotation(45);
+                                gratingImageView.setRotation((float) currentStaircase.getCurrentAngle());
                                 gratingImageView.setVisibility(View.VISIBLE);
                             }
                         }, timeElapsed);
@@ -135,13 +157,43 @@ public class Experiment extends AppCompatActivity {
                                 gratingImageView.setVisibility(View.INVISIBLE);
                             }
                         }, timeElapsed);
+
+                        synchronized (lock) {
+                            lock.wait();
+                        }
+
+                        if (clickLeft) {
+                            if (currentStaircase.isCW()) {
+                                currentStaircase.updateStaircase(false);
+                            } else {
+                                currentStaircase.updateStaircase(true);
+                            }
+                        } else if (clickRight) {
+                            if (currentStaircase.isCW()) {
+                                currentStaircase.updateStaircase(true);
+                            } else {
+                                currentStaircase.updateStaircase(false);
+                            }
+                        }
+
+                        if (currentStaircase.isFinished()) {
+                            finishedStaircases.add(currentStaircase);
+                            staircases.remove(currentStaircase);
+                        }
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
-                    done = true; // Need to get rid of this and have the value of done change when the experiment is over
+                    if (staircases.size() == 0) {
+                        done = true; // Need to get rid of this and have the value of done change when the experiment is over
+                        expOver();
+                    }
                 }
             }
         }).start();
+    }
+
+    private void expOver() {
+        Toast.makeText(this, "Experiment finished",Toast.LENGTH_LONG).show();
     }
 
     // Need to initialize staircases
@@ -154,6 +206,9 @@ public class Experiment extends AppCompatActivity {
             clickRight();
         } else {
             clickLeft();
+        }
+        synchronized (lock) {
+            lock.notify();
         }
         return super.onTouchEvent(event);
     }
@@ -186,6 +241,7 @@ public class Experiment extends AppCompatActivity {
 
             // Initialize ArrayLists
             staircases = new ArrayList<Staircase>();
+            initStaircases();
 
             // Start up game
             if (hasFocus) {

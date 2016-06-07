@@ -20,7 +20,7 @@ public class Staircase {
     // A boolean that makes sure that if it's the easiest setting that
 
     public Staircase(int baseAngle, boolean isCW) {
-        this.baseAngle = baseAngle;
+        this.baseAngle = baseAngle - 90; // Changed to -90 because the grating starts at 90 degrees
         this.isCW = isCW;
         responses = new ArrayList<>();
         counter = 0;
@@ -29,12 +29,20 @@ public class Staircase {
         if (isCW) {
             this.currentAngle = AppConstants.STARTING_ANGLE + this.baseAngle;
         } else {
-            this.currentAngle = AppConstants.STARTING_ANGLE - this.baseAngle;
+            this.currentAngle = this.baseAngle - AppConstants.STARTING_ANGLE;
         }
     }
 
     public double getCurrentAngle() {
         return currentAngle;
+    }
+
+    public int getBaseAngle() {
+        return baseAngle;
+    }
+
+    public boolean isCW() {
+        return isCW;
     }
 
     public void updateStaircase(boolean isCorrect) {
@@ -48,7 +56,7 @@ public class Staircase {
             if (isCorrect) {
                 this.currentAngle = prev - prev / 2;
             } else {
-                if (prev + prev / 2 < 90) {
+                if ((prev + prev / 2) < 90) {
                     this.currentAngle = prev + prev / 2;
                 }
             }
@@ -56,14 +64,14 @@ public class Staircase {
             if (isCorrect) {
                 this.currentAngle = prev + prev / 2;
             } else {
-                if (prev + prev / 2 < 90) {
+                if ((prev + prev / 2) < 90) {
                     this.currentAngle = prev - prev / 2;
                 }
             }
         }
 
         if (responses.size() >= 2) {
-            if (responses.get(counter - 1) != responses.get(counter)) {
+            if (responses.get(counter - 2) != responses.get(counter-1)) {
                 reversals.add(reversals.size() - 1, prev - this.currentAngle);
             }
         }
@@ -80,11 +88,7 @@ public class Staircase {
     }
 
     public boolean isFinished() {
-        if (reversals.size() == AppConstants.NUM_REVERSALS_TOTAL) {
-            return true;
-        } else {
-            return false;
-        }
+        return reversals.size() == AppConstants.NUM_REVERSALS_TOTAL;
     }
 
 }
