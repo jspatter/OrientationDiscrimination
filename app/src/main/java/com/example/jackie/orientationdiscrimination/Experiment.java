@@ -34,6 +34,7 @@ public class Experiment extends AppCompatActivity {
     private ImageView gratingImageView;
     private Context mContext;
     private Object lock = new Object();
+    private boolean ready = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -158,6 +159,8 @@ public class Experiment extends AppCompatActivity {
                             }
                         }, timeElapsed);
 
+                        ready = true;
+
                         synchronized (lock) {
                             lock.wait();
                         }
@@ -201,16 +204,21 @@ public class Experiment extends AppCompatActivity {
     // Create a touch detector
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        double x = event.getX();
-        if (x > screenWidth / 2) {
-            clickRight();
+        if (ready) {
+            double x = event.getX();
+            if (x > screenWidth / 2) {
+                clickRight();
+            } else {
+                clickLeft();
+            }
+            synchronized (lock) {
+                lock.notify();
+            }
+            ready = false;
+            return super.onTouchEvent(event);
         } else {
-            clickLeft();
+            return false;
         }
-        synchronized (lock) {
-            lock.notify();
-        }
-        return super.onTouchEvent(event);
     }
 
     // Called when window focus has changed (e.g. when coming to the screen for the first time from

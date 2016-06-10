@@ -15,7 +15,7 @@ public class AppConstants {
     public static final int NUM_REVERSALS_IGNORE = 2;
     public static final int NUM_REVERSALS_TOTAL = 6;
 
-    public static final int PRESENTATION_TIME = 350; // in milliseconds
-    public static final int ISI_TIME = 500; // in milliseconds
+    public static final int PRESENTATION_TIME = 3000; // in milliseconds
+    public static final int ISI_TIME = 1000; // in milliseconds
 
 }
